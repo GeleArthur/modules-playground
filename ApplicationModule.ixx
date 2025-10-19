@@ -38,7 +38,7 @@ public:
 		window = SDL_CreateWindow("Great UI", 640, 480, 0);
 		wgpu::Instance instance = wgpu::createInstance();
 
-		wgpu::Surface surface = SDL_GetWGPUSurface(instance, window);
+		surface = SDL_GetWGPUSurface(instance, window);
 
 		wgpu::RequestAdapterOptions adapterOpts{};
 		adapterOpts.compatibleSurface = surface;
@@ -72,11 +72,11 @@ public:
 		wgpu::SurfaceCapabilities capabilities;
 
 		surface.getCapabilities(adapter, &capabilities);
+		surfaceFormat = capabilities.formats[0];
 
-		wgpu::SurfaceConfiguration config{};
 		surface.configure(WGPUSurfaceConfiguration{
 			.device = device,
-			.format = capabilities.formats[0],
+			.format = surfaceFormat,
 			.usage = wgpu::TextureUsage::RenderAttachment,
 			.width = 640,
 			.height = 480,
@@ -87,6 +87,8 @@ public:
 		});
 
 		adapter.release();
+
+		InitializePipeline();
 	}
 
 	// Uninitialize everything that was initialized
@@ -109,7 +111,7 @@ public:
 
 		// Create a command encoder for the draw call
 		wgpu::CommandEncoderDescriptor encoderDesc = {};
-		encoderDesc.label = {"My command encoder"};
+		encoderDesc.label = wgpu::StringView{"My command encoder"};
 		wgpu::CommandEncoder encoder = wgpuDeviceCreateCommandEncoder(device, &encoderDesc);
 
 		// Create the render pass that clears the screen with our color
@@ -143,7 +145,7 @@ public:
 
 		// Finally encode and submit the render pass
 		wgpu::CommandBufferDescriptor cmdBufferDescriptor = {};
-		cmdBufferDescriptor.label = {"Command buffer"};
+		cmdBufferDescriptor.label = wgpu::StringView{"Command buffer"};
 		wgpu::CommandBuffer command = encoder.finish(cmdBufferDescriptor);
 		encoder.release();
 
@@ -185,7 +187,7 @@ private:
 
 		// Create a view for this surface texture
 		wgpu::TextureViewDescriptor viewDescriptor;
-		viewDescriptor.label = {"Surface texture view"};
+		viewDescriptor.label = wgpu::StringView{"Surface texture view"};
 		viewDescriptor.format = texture.getFormat();
 		viewDescriptor.dimension = wgpu::TextureViewDimension::_2D;
 		viewDescriptor.baseMipLevel = 0;
@@ -216,7 +218,7 @@ private:
 		shaderCodeDesc.chain.sType = wgpu::SType::ShaderSourceWGSL;
 		// Connect the chain
 		shaderDesc.nextInChain = &shaderCodeDesc.chain;
-		shaderCodeDesc.code = {shaderSource, strlen(shaderSource)};
+		shaderCodeDesc.code = wgpu::StringView{shaderSource};
 		wgpu::ShaderModule shaderModule = device.createShaderModule(shaderDesc);
 
 		// Create the render pipeline
@@ -230,7 +232,7 @@ private:
 		// Here we tell that the programmable vertex shader stage is described
 		// by the function called 'vs_main' in that module.
 		pipelineDesc.vertex.module = shaderModule;
-		pipelineDesc.vertex.entryPoint = {"vs_main"};
+		pipelineDesc.vertex.entryPoint = wgpu::StringView{"vs_main"};
 		pipelineDesc.vertex.constantCount = 0;
 		pipelineDesc.vertex.constants = nullptr;
 
@@ -255,7 +257,7 @@ private:
 		// by the function called 'fs_main' in the shader module.
 		wgpu::FragmentState fragmentState;
 		fragmentState.module = shaderModule;
-		fragmentState.entryPoint = {"fs_main"};
+		fragmentState.entryPoint = wgpu::StringView{"fs_main"};
 		fragmentState.constantCount = 0;
 		fragmentState.constants = nullptr;
 
