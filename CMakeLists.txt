@@ -3,7 +3,8 @@ cmake_minimum_required(VERSION 4.1.2)
 set(CMAKE_CXX_MODULE_STD 1)
 set(CMAKE_EXPERIMENTAL_CXX_IMPORT_STD "d0edc3af-4c50-42ea-a356-e2862fe7a444")
 project(modulesUI LANGUAGES CXX C)
-set(CMAKE_CXX_STANDARD 26)
+set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 include(FetchContent)
 
@@ -15,10 +16,11 @@ target_sources(modulesUI PRIVATE
         PRIVATE
         FILE_SET cxx_modules
         TYPE CXX_MODULES FILES
-        create_window.cppm
+        ApplicationModule.ixx
 )
 
-set(OPTION "WEBGPU_BACKEND" CACHE STRING "WGPU" FORCE)
+#set(OPTION "WEBGPU_BACKEND" CACHE STRING "WGPU" FORCE)
+#set(OPTION "WEBGPU_BACKEND" CACHE STRING "DAWN" FORCE)
 
 FetchContent_Declare(
         webgpu
@@ -48,5 +50,13 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(SDL3Webgpu)
 
 
-target_link_libraries(${PROJECT_NAME} PRIVATE webgpu SDL3::SDL3 sdl3webgpu X11)
+target_link_libraries(${PROJECT_NAME} PRIVATE webgpu SDL3::SDL3 sdl3webgpu)
 target_copy_webgpu_binaries(${PROJECT_NAME})
+
+if (WIN32)
+    add_custom_command(
+            TARGET ${PROJECT_NAME} POST_BUILD
+            COMMAND "${CMAKE_COMMAND}" -E copy $<TARGET_FILE:SDL3::SDL3> $<TARGET_FILE_DIR:${PROJECT_NAME}>
+            VERBATIM
+    )
+endif ()
