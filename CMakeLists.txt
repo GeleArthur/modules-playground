@@ -1,10 +1,13 @@
 cmake_minimum_required(VERSION 4.1.2)
 
-set(CMAKE_CXX_MODULE_STD 1)
-set(CMAKE_EXPERIMENTAL_CXX_IMPORT_STD "d0edc3af-4c50-42ea-a356-e2862fe7a444")
+# Sadly emscripten doesn't supports this yet!?!?!
+#set(CMAKE_CXX_MODULE_STD 1)
+#set(CMAKE_EXPERIMENTAL_CXX_IMPORT_STD "d0edc3af-4c50-42ea-a356-e2862fe7a444")
 project(modulesUI LANGUAGES CXX C)
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+set(CMAKE_BUILD_TYPE Debug)
 
 include(FetchContent)
 
@@ -59,4 +62,9 @@ if (WIN32)
             COMMAND "${CMAKE_COMMAND}" -E copy $<TARGET_FILE:SDL3::SDL3> $<TARGET_FILE_DIR:${PROJECT_NAME}>
             VERBATIM
     )
+endif ()
+
+if (EMSCRIPTEN)
+    set_target_properties(${PROJECT_NAME} PROPERTIES SUFFIX ".html")
+    target_link_options(${PROJECT_NAME} PRIVATE -sASYNCIFY)
 endif ()

@@ -7,7 +7,6 @@ module;
 
 export module ApplicationModule;
 
-
 const char* shaderSource = R"(
 @vertex
 fn vs_main(@builtin(vertex_index) in_vertex_index: u32) -> @builtin(position) vec4f {
@@ -36,7 +35,7 @@ public:
 	void Initialize()
 	{
 		window = SDL_CreateWindow("Great UI", 640, 480, 0);
-		wgpu::Instance instance = wgpu::createInstance();
+		instance = wgpu::createInstance();
 
 		surface = SDL_GetWGPUSurface(instance, window);
 
@@ -45,7 +44,6 @@ public:
 
 		wgpu::Adapter adapter = instance.requestAdapter(adapterOpts);
 
-		instance.release();
 
 		wgpu::DeviceDescriptor deviceDesc{};
 		deviceDesc.label = wgpu::StringView{"Device"};
@@ -62,15 +60,15 @@ public:
 		deviceDesc.deviceLostCallbackInfo.callback = [](WGPUDevice const* device, WGPUDeviceLostReason reason,
 		                                                WGPUStringView message, void*, void* /* pUserData */)
 		{
-			std::cout << "Device lost: " << wgpu::StringView(message);
+			std::cout << "Device lost: " << wgpu::StringView(message) << std::endl;
 		};
+		deviceDesc.deviceLostCallbackInfo.mode = WGPUCallbackMode_WaitAnyOnly;
 		device = adapter.requestDevice(deviceDesc);
 		std::cout << "Got device: " << device << std::endl;
 
 		queue = device.getQueue();
 
 		wgpu::SurfaceCapabilities capabilities;
-
 		surface.getCapabilities(adapter, &capabilities);
 		surfaceFormat = capabilities.formats[0];
 
@@ -89,23 +87,38 @@ public:
 		adapter.release();
 
 		InitializePipeline();
+
+		wgpu::BufferDescriptor bufferDesc{};
+		bufferDesc.usage = WGPUBufferUsage_Vertex;
+		wgpu::Buffer vertex_buffer = device.createBuffer(bufferDesc);
+		
+		// vertex_buffer.map
 	}
 
 	// Uninitialize everything that was initialized
 	void Terminate()
 	{
+		// pipeline.release();
+		// queue.release();
+		// surface.release();
+		device.destroy();
+		device.release();
+		instance.release();
+		SDL_DestroyWindow(window);
+	}
+
+	SDL_AppResult EventHandle(SDL_Event* event)
+	{
+		if (event->type == SDL_EVENT_QUIT)
+		{
+			return SDL_APP_SUCCESS;
+		}
+		return SDL_APP_CONTINUE;
 	}
 
 	// Draw a frame and handle events
 	void MainLoop()
 	{
-		SDL_Event event;
-		SDL_PollEvent(&event);
-		if (event.type == SDL_EVENT_QUIT)
-		{
-			m_isRunning = false;
-		}
-
 		wgpu::TextureView targetView = GetNextSurfaceTextureView();
 		if (!targetView) return;
 
@@ -115,7 +128,7 @@ public:
 		wgpu::CommandEncoder encoder = wgpuDeviceCreateCommandEncoder(device, &encoderDesc);
 
 		// Create the render pass that clears the screen with our color
-		wgpu::RenderPassDescriptor renderPassDesc = {};
+		wgpu::RenderPassDescriptor renderPassDesc{};
 
 		// The attachment part of the render pass descriptor describes the target texture of the pass
 		wgpu::RenderPassColorAttachment renderPassColorAttachment = {};
@@ -148,11 +161,8 @@ public:
 		cmdBufferDescriptor.label = wgpu::StringView{"Command buffer"};
 		wgpu::CommandBuffer command = encoder.finish(cmdBufferDescriptor);
 		encoder.release();
-
-		std::cout << "Submitting command..." << std::endl;
 		queue.submit(1, &command);
 		command.release();
-		std::cout << "Command submitted." << std::endl;
 
 		// At the enc of the frame
 		targetView.release();
@@ -167,12 +177,6 @@ public:
 #endif
 	}
 
-	// Return true as long as the main loop should keep on running
-	bool IsRunning()
-	{
-		return m_isRunning;
-	}
-
 private:
 	wgpu::TextureView GetNextSurfaceTextureView()
 	{
@@ -181,7 +185,7 @@ private:
 		surface.getCurrentTexture(&surfaceTexture);
 		if (surfaceTexture.status != wgpu::SurfaceGetCurrentTextureStatus::SuccessOptimal)
 		{
-			return nullptr;
+			return wgpu::TextureView{};
 		}
 		wgpu::Texture texture = surfaceTexture.texture;
 
@@ -306,4 +310,5 @@ private:
 	wgpu::Surface surface;
 	wgpu::TextureFormat surfaceFormat = wgpu::TextureFormat::Undefined;
 	wgpu::RenderPipeline pipeline;
+	wgpu::Instance instance;
 };
