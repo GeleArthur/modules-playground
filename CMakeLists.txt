@@ -13,26 +13,18 @@ include(FetchContent)
 
 add_executable(${PROJECT_NAME})
 
+add_subdirectory(dynamic_library)
+
 target_sources(modulesUI PRIVATE
-        main.cpp
+        src/main.cpp
 
         PRIVATE
         FILE_SET cxx_modules
         TYPE CXX_MODULES FILES
-        ApplicationModule.ixx
+        src/EditorApplication.ixx
 )
 
-#set(OPTION "WEBGPU_BACKEND" CACHE STRING "WGPU" FORCE)
-#set(OPTION "WEBGPU_BACKEND" CACHE STRING "DAWN" FORCE)
-
-FetchContent_Declare(
-        webgpu
-        GIT_REPOSITORY https://github.com/eliemichel/WebGPU-distribution
-        GIT_TAG 17dcd42a7683355e7a40ac4e97e77f36dff5b5ab
-        GIT_SHALLOW TRUE
-        GIT_PROGRESS TRUE
-)
-FetchContent_MakeAvailable(webgpu)
+file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/.gitignore *)
 
 FetchContent_Declare(
         SDL3
@@ -44,17 +36,31 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(SDL3)
 
 FetchContent_Declare(
-        SDL3Webgpu
-        GIT_REPOSITORY https://github.com/eliemichel/sdl3webgpu.git
-        GIT_TAG 4fa9d70935e41c075f664b231ee10a64262a8ac7
+        imgui
+        GIT_REPOSITORY https://github.com/ocornut/imgui.git
+        GIT_TAG v1.92.4-docking
         GIT_SHALLOW TRUE
-        GIT_PROGRESS TRUE
 )
-FetchContent_MakeAvailable(SDL3Webgpu)
+FetchContent_MakeAvailable(imgui)
+
+add_library(imgui)
+target_include_directories(imgui PUBLIC ${imgui_SOURCE_DIR})
+target_sources(imgui PRIVATE
+        ${imgui_SOURCE_DIR}/imgui.cpp
+        ${imgui_SOURCE_DIR}/imgui_draw.cpp
+        ${imgui_SOURCE_DIR}/imgui_widgets.cpp
+        ${imgui_SOURCE_DIR}/imgui_demo.cpp
+        ${imgui_SOURCE_DIR}/imgui_tables.cpp
+
+        ${imgui_SOURCE_DIR}/backends/imgui_impl_sdl3.h
+        ${imgui_SOURCE_DIR}/backends/imgui_impl_sdl3.cpp
+        ${imgui_SOURCE_DIR}/backends/imgui_impl_sdlrenderer3.h
+        ${imgui_SOURCE_DIR}/backends/imgui_impl_sdlrenderer3.cpp
+)
+target_link_libraries(imgui PRIVATE SDL3::SDL3)
 
 
-target_link_libraries(${PROJECT_NAME} PRIVATE webgpu SDL3::SDL3 sdl3webgpu)
-target_copy_webgpu_binaries(${PROJECT_NAME})
+target_link_libraries(${PROJECT_NAME} PRIVATE SDL3::SDL3 imgui)
 
 if (WIN32)
     add_custom_command(

@@ -28,7 +28,7 @@ fn fs_main() -> @location(0) vec4f {
 )";
 
 
-export class Application
+export class ApplicationWebGPU
 {
 public:
 	// Initialize everything and return true if it went all right
@@ -38,6 +38,7 @@ public:
 		instance = wgpu::createInstance();
 
 		surface = SDL_GetWGPUSurface(instance, window);
+
 
 		wgpu::RequestAdapterOptions adapterOpts{};
 		adapterOpts.compatibleSurface = surface;
@@ -91,7 +92,7 @@ public:
 		wgpu::BufferDescriptor bufferDesc{};
 		bufferDesc.usage = WGPUBufferUsage_Vertex;
 		wgpu::Buffer vertex_buffer = device.createBuffer(bufferDesc);
-		
+
 		// vertex_buffer.map
 	}
 

@@ -2,40 +2,33 @@
 #include <SDL3/SDL_main.h>
 
 #define SDL_MAIN_HANDLED
-#include "sdl3webgpu.h"
 #include <SDL3/SDL.h>
 
-
-#define WEBGPU_CPP_IMPLEMENTATION
-#include <webgpu/webgpu.hpp>
-
-import ApplicationModule;
+import EditorApplicationMod;
 
 namespace
 {
-    Application app{};
+    EditorApplication app{};
 }
 
 SDL_AppResult SDL_AppInit(void** appstate, int argc, char** argv)
 {
-    app.Initialize();
-    return SDL_APP_CONTINUE;
+    return app.Initialize();
 }
 
 SDL_AppResult SDL_AppIterate(void* appstate)
 {
-    app.MainLoop();
-    return SDL_APP_CONTINUE;
+    return app.SDL_AppIterate(appstate);
 }
 
 SDL_AppResult SDL_AppEvent(void* appstate, SDL_Event* event)
 {
-    return app.EventHandle(event);
+    return app.SDL_AppEvent(appstate, event);
 }
 
 void SDL_AppQuit(void* appstate, SDL_AppResult result)
 {
-    app.Terminate();
+    app.SDL_AppQuit(appstate, result);
 }
 
 // int main(int argc, char* argv[])
